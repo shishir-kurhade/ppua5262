@@ -82,4 +82,43 @@ data['category_group'] <- ifelse(c(data$Tag_1=='restaurant'|data$Tag_1=='meal_de
 
 ```
 
+The areas mentioned in the vicinity are broken out into Boston, Greater Boston, Greater MA (Massachusetts), Outside MA, and N/A. The N/A is for those that do not have any information in the vicinity column. Some vicinities included the name of a square which is inside a city so that had to be accounted for as did inputs such as Gilette which is in Foxborough which is in the Greater Boston area. This variable is named bucket_vicinity.
+```{r}
+data$bucket_vicinity <- ifelse(data$vicinity==' ','N/A','Place Holder')
+i=1;
+
+boston <- c('Cambridge', 'Boston', 'Roslindale', 'Hyde Park', 'Roxbury', 'Jamaica Plain', 'Brighton', 'Dorchester', 'Charlestown', 'Chestnut Hill', 'Allston', 'Mattapan', 'Readville', 'Mission Hill', 'Neponset', 'South End')
+
+greater_boston <- c('Quincy', 'Dedham', 'Brookline', 'Somerville', 'Chelsea', 'Braintree', 'Weymouth', 'Newton', 'Scituate', 'Norwood', 'Watertown', 'Milton', 'Winthrop', 'Medford', 'Everett', 'Arlington', 'Nahant', 'Revere', 'Malden', 'Canton', 'Hingham', 'Lynn', 'Needham', 'North Reading', 'Waltham', 'Burlington', 'Lexington', 'Randolph', 'Wakefield', 'Concord', 'Saugus', 'Natick', 'Wellesley', 'Ipswich', 'Medfield', 'Sloughton', 'Salem', 'Worcester', 'Walpole', 'Melrose', 'Swampscott', 'Peabody', 'Haverhill', 'Framingham', 'Quincy', 'Worcester', 'Stoneham', 'Tewksbury', 'Woburn', 'Pembroke', 'Winter Hill', 'Belmont', 'Wollaston', 'Hull', 'Acton', 'Cohasset', 'Wrentham', 'Gillette', 'Accord', 'Norwell', 'Westwood', 'Squantum', 'Danvers', 'Wenham', 'Marblehead', 'Georgetown', 'Rutland', 'Norfolk')
+
+MA_other <- c('Oak Bluffs', 'Plymouth', 'Elmwood', 'Chester', 'Mashpee', 'Kingston', 'Truro', 'Minot')
+
+while(i<=nrow(data)){
+  if(data$bucket_vicinity[i] == 'Place Holder')
+  {
+    
+    if(str_detect(data$vicinity[i], paste(boston, collapse = "|")))
+    {
+      data$bucket_vicinity[i] = 'Boston'
+    } else {
+      if(str_detect(data$vicinity[i], paste(greater_boston, collapse = "|")))
+      {
+        data$bucket_vicinity[i] = 'Greater Boston' 
+      } else {
+        if(str_detect(data$vicinity[i], paste(MA_other, collapse = "|")))
+        {
+          data$bucket_vicinity[i] = 'Greater MA' 
+        } else {
+          data$bucket_vicinity[i] = 'Outside MA' 
+        }
+        
+      }
+    }
+    
+  }
+  i=i+1
+}
+```
+
+
 
