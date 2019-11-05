@@ -14,6 +14,12 @@ library(tidyr)
 library(stringr)
 library(ggplot2)
 library(magrittr)
+library(leaflet)
+library(tidycensus)
+library(tigris)
+library(sf)
+library(acs)
+census_api_key("3c3629c35ba44bcbea7c5636cb93deefd7b0db39")
 
 ```
 
@@ -102,6 +108,30 @@ while(i<=nrow(data)){
   }
   i=i+1
 }
+```
+
+```{r, include=FALSE}
+data$str_merged_tags <- paste(data$Tag_1, data$Tag_2, data$Tag_3, data$Tag_4, data$Tag_5, data$Tag_6, data$Tag_7, data$Tag_8, data$Tag_9, data$Tag_10, sep=" ")
+religious <- c('hindu_temple', 'church', 'mosque', 'synagouge')
+religous_by_tract <- aggregate(str_detect(str_merged_tags, paste(religious, collapse = "|"))~Tract_Group, data=data, FUN=sum)
+entertainment <- c('stadium', 'movie_theater', 'aquarium', 'entertainment', 'bowling_alley', 'shopping_mall')
+entertainment_by_tract <- aggregate(str_detect(str_merged_tags, paste(entertainment, collapse = "|"))~Tract_Group, data=data, FUN=sum)
+age_restricted <- c('bar', 'nightclub')
+age_restr_by_tract <- aggregate(str_detect(str_merged_tags, paste(age_restricted, collapse = "|"))~Tract_Group, data=data, FUN=sum)
+outdoor <- c('campground', 'park')
+outdoor_by_tract <- aggregate(str_detect(str_merged_tags, paste(outdoor, collapse = "|"))~Tract_Group, data=data, FUN=sum)
+educational <- c('museum', 'library', 'art_gallery')
+educational_by_tract <- aggregate(str_detect(str_merged_tags, paste(educational, collapse = "|"))~Tract_Group, data=data, FUN=sum)
+dining <- c('restaurant', 'cafe')
+dining_by_tract <- aggregate(str_detect(str_merged_tags, paste(dining, collapse = "|"))~Tract_Group, data=data, FUN=sum)
+
+on_alc<-aggregate(str_detect(data$str_merged_tags,paste(c('bar','night_club'),collapse='|'))~data$Tract_Group,data=data,sum)
+names(on_alc)[1] <- 'Tract_Group'
+names(on_alc)[2]<-'count'
+off_alc<-aggregate(str_detect(data$str_merged_tags,'liquor_store')~data$Tract_Group,data=data,sum)
+names(off_alc)[1] <- 'Tract_Group'
+names(off_alc)[2]<-'count'
+
 ```
 
 
