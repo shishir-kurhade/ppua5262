@@ -23,41 +23,24 @@ census_api_key("3c3629c35ba44bcbea7c5636cb93deefd7b0db39")
 
 ```
 
-## R Markdown
-
-Please upload an updated version of your data set to the Boston Data Library by the end of the week. Technical instructions for using the Dataverse are attached.
-
-Make sure your group includes:
-The record-level file with all new and modified variables included.
-An updated Data Documentation that describes the new variables and, if necessary, modifies the description of any already existing variables.
-Annotated R syntax clearly articulating steps for all data cleaning and variable creation. This should be efficient and complete such that the code could be run all at once on raw data to recreate the updated data set.
-Link to Boston Data Library: https://dataverse.harvard.edu/dataverse/BARI
 
 
 
-```{r, echo=FALSE}
-
-
-
-
-#str_replace(data$street,'[0-9]+','')
-```
 ```{r}
+#Reads in the csv file of Google Places data to create a data frame called data
 data<-read.csv('C:\\Users\\HP\\Desktop\\PPUA 5262 Big Data for Cities\\Data Assignments\\Assignment 1\\places.csv')
 
-
-(nrow(data))
-(ncol(data))
-
-#
+#Takes the first two digits of the BLK_ID_10 variable and creates the variable 'State' in data. Creates a separate array 'Extra' for the remaining digits of BLK_ID_10 
 data <-separate(data,Blk_ID_10,c('State','Extra'),sep=2,remove= FALSE)
+
+#Takes the first three digits of 'Extra' [ln 34] and creates the variable 'County' in data. Removes the first three digits from 'Extra'
 data <-separate(data,Extra,c('County','Extra'),sep=3,remove=TRUE)
+
+#Takes the first six digits of 'Extra' [ln 37] and creates the variable 'Tract_Group' in data. Takes the rest of the digits and creates #the varaible 'Block_Group' in data. All digits are removed from 'Extra'
 data <-separate(data,Extra,c('Tract_Group','Block_Group'),sep=6,remove=TRUE)
-data <-separate(data,vicinity,c('street','city'),sep=",",remove=FALSE)
-data$street <-gsub('[0-9]+', "", data$street)
 
-
-data['category_group'] <- ifelse(c(data$Tag_1=='restaurant'|data$Tag_1=='meal_delivery'|data$Tag_1=='meal_takeaway'|data$Tag_1=='bakery'|data$Tag_1=='cafe'|data$Tag_1=='bar'|data$Tag_1=='convenience_store'|data$Tag_1=='liquor_store'|data$Tag_1=='supermarket'|data$Tag_1=='food'),'food_drink',
+#Creates a new variable in data frame data called 'Category_group' that assigns either 'food_drink', 'entertainment', 'municipal', #'goods_services', 'health', 'lodging', 'education' or 'other' based on the string in the Tag_1 column.
+data['Category_group'] <- ifelse(c(data$Tag_1=='restaurant'|data$Tag_1=='meal_delivery'|data$Tag_1=='meal_takeaway'|data$Tag_1=='bakery'|data$Tag_1=='cafe'|data$Tag_1=='bar'|data$Tag_1=='convenience_store'|data$Tag_1=='liquor_store'|data$Tag_1=='supermarket'|data$Tag_1=='food'),'food_drink',
        ifelse(c(data$Tag_1=='art_gallery'|data$Tag_1=='aquarium'|data$Tag_1=='amusement_park'|data$Tag_1=='bowling_alley'|data$Tag_1=='casino'|data$Tag_1=='movie_rental'|data$Tag_1=='movie_theater'|data$Tag_1=='museum'|data$Tag_1=='night_club'|data$Tag_1=='shopping_mall'|data$Tag_1=='tourist_attraction'|data$Tag_1=='zoo'|data$Tag_1=='stadium'),'entertainment',
               ifelse(c(data$Tag_1=='airport'|data$Tag_1=='city_hall'|data$Tag_1=='courthouse'|data$Tag_1=='fire_station'|data$Tag_1=='library'|data$Tag_1=='local_government_office'|data$Tag_1=='post_office'|data$Tag_1=='police'|data$Tag_1=='park'),'municipal',
                      ifelse(c(data$Tag_1=='accounting'|data$Tag_1=='beauty_salon'|data$Tag_1=='bicycle_store'|data$Tag_1=='car_rental'|data$Tag_1=='car_dealer'|data$Tag_1=='car_repair'|data$Tag_1=='book_store'|data$Tag_1=='car_wash'|data$Tag_1=='clothing_store'|data$Tag_1=='department_store'|data$Tag_1=='drugstore'|data$Tag_1=='electronics_store'|data$Tag_1=='florist'|data$Tag_1=='funeral_home'|data$Tag_1=='furniture_store'|data$Tag_1=='hair_care'|data$Tag_1=='jewelry_store'|data$Tag_1=='home_goods_store'|data$Tag_1=='insurance_agency'|data$Tag_1=='laundry'|data$Tag_1=='hardware_store'|data$Tag_1=='locksmith'|data$Tag_1=='pet_store'|data$Tag_1=='painter'|data$Tag_1=='moving_company'|data$Tag_1=='pharmacy'|data$Tag_1=='plumber'|data$Tag_1=='shoe_store'|data$Tag_1=='store'|data$Tag_1=='travel_agency'|data$Tag_1=='spa'|data$Tag_1=='roofing_contractor'|data$Tag_1=='real_estate_agency'|data$Tag_1=='bank'|data$Tag_1=='gas_station'|data$Tag_1=='atm'|data$Tag_1=='storage'|data$Tag_1=='finance'|data$Tag_1=='general_contractor'|data$Tag_1=='electrician'|data$Tag_1=='lawyer'),'goods_services',
@@ -71,67 +54,162 @@ data['category_group'] <- ifelse(c(data$Tag_1=='restaurant'|data$Tag_1=='meal_de
 
 
 ```
+```{r, include=FALSE}
+#Creates a new varible in the data frame data called 'Bucket_vicinity' which is a string. It is assigned a value of 'N/A' if there is no 
+#data in the 'vicinity' column otherwise it is assigned a value of 'Place Holder'
+data$Bucket_vicinity <- ifelse(data$vicinity==' ','N/A','Place Holder')
 
-The areas mentioned in the vicinity are broken out into Boston, Greater Boston, Greater MA (Massachusetts), Outside MA, and N/A. The N/A is for those that do not have any information in the vicinity column. Some vicinities included the name of a square which is inside a city so that had to be accounted for as did inputs such as Gilette which is in Foxborough which is in the Greater Boston area. This variable is named bucket_vicinity.
-```{r}
-data$bucket_vicinity <- ifelse(data$vicinity==' ','N/A','Place Holder')
+#A counter 'i' which is initialized to 1 used for count driven while loop
 i=1;
 
-boston <- c('Cambridge', 'Boston', 'Roslindale', 'Hyde Park', 'Roxbury', 'Jamaica Plain', 'Brighton', 'Dorchester', 'Charlestown', 'Chestnut Hill', 'Allston', 'Mattapan', 'Readville', 'Mission Hill', 'Neponset', 'South End')
+#Creates an array of strings called 'boston' which has the names of all the neighborhoods in Boston
+boston <- c('Boston', 'Roslindale', 'Hyde Park', 'Roxbury', 'Jamaica Plain', 'Brighton', 'Dorchester', 'Charlestown', 'Chestnut Hill', 'Allston', 'Mattapan', 'Readville', 'Mission Hill', 'Neponset', 'South End', 'Beacon Hill', 'Back Bay', 'Bay Village', 'Chinatown/Leather District', 'Downtown', 'East Boston', 'Fenway Kenmore', 'North End', 'West End')
 
-greater_boston <- c('Quincy', 'Dedham', 'Brookline', 'Somerville', 'Chelsea', 'Braintree', 'Weymouth', 'Newton', 'Scituate', 'Norwood', 'Watertown', 'Milton', 'Winthrop', 'Medford', 'Everett', 'Arlington', 'Nahant', 'Revere', 'Malden', 'Canton', 'Hingham', 'Lynn', 'Needham', 'North Reading', 'Waltham', 'Burlington', 'Lexington', 'Randolph', 'Wakefield', 'Concord', 'Saugus', 'Natick', 'Wellesley', 'Ipswich', 'Medfield', 'Sloughton', 'Salem', 'Worcester', 'Walpole', 'Melrose', 'Swampscott', 'Peabody', 'Haverhill', 'Framingham', 'Quincy', 'Worcester', 'Stoneham', 'Tewksbury', 'Woburn', 'Pembroke', 'Winter Hill', 'Belmont', 'Wollaston', 'Hull', 'Acton', 'Cohasset', 'Wrentham', 'Gillette', 'Accord', 'Norwell', 'Westwood', 'Squantum', 'Danvers', 'Wenham', 'Marblehead', 'Georgetown', 'Rutland', 'Norfolk')
+#Creates an array of strings called 'greater_boston' which is the names of cities/towns outside of Boston which are relatively near #Boston that exist in the data set (no set distance, just eyeballed with map)
+greater_boston <- c('Cambridge', 'Quincy', 'Dedham', 'Brookline', 'Somerville', 'Chelsea', 'Braintree', 'Weymouth', 'Newton', 'Scituate', 'Norwood', 'Watertown', 'Milton', 'Winthrop', 'Medford', 'Everett', 'Arlington', 'Nahant', 'Revere', 'Malden', 'Canton', 'Hingham', 'Lynn', 'Needham', 'North Reading', 'Waltham', 'Burlington', 'Lexington', 'Randolph', 'Wakefield', 'Concord', 'Saugus', 'Natick', 'Wellesley', 'Ipswich', 'Medfield', 'Sloughton', 'Salem', 'Worcester', 'Walpole', 'Melrose', 'Swampscott', 'Peabody', 'Haverhill', 'Framingham', 'Quincy', 'Worcester', 'Stoneham', 'Tewksbury', 'Woburn', 'Pembroke', 'Winter Hill', 'Belmont', 'Wollaston', 'Hull', 'Acton', 'Cohasset', 'Wrentham', 'Accord', 'Norwell', 'Westwood', 'Squantum', 'Danvers', 'Wenham', 'Marblehead', 'Georgetown', 'Rutland', 'Norfolk')
 
+#Creates an array of strings called 'MA_Other' which has the names of cities/towns in the data set far outside of Boston which are still #in Massachusetts but not in greater_boston
 MA_other <- c('Oak Bluffs', 'Plymouth', 'Elmwood', 'Chester', 'Mashpee', 'Kingston', 'Truro', 'Minot')
 
+#while loop for indexing through each row of the data, will go until i equals the number of rows in the data 
 while(i<=nrow(data)){
-  if(data$bucket_vicinity[i] == 'Place Holder')
+  
+  #checks that the value in the ith row's Bucket_vicinity is 'Place Holder'
+  if(data$Bucket_vicinity[i] == 'Place Holder')
   {
     
+  #checks if the ith row's vicinity has any of the values in the 'boston' array (capitalization and white space must also match) 
     if(str_detect(data$vicinity[i], paste(boston, collapse = "|")))
     {
-      data$bucket_vicinity[i] = 'Boston'
+    #Update the ith row's Bucket_vicinity value to 'Boston'
+      data$Bucket_vicinity[i] = 'Boston'
     } else {
+    #checks if the ith row's vicinity has any of the values in the 'greater_boston' array (capitalization and white space must also         #match) 
       if(str_detect(data$vicinity[i], paste(greater_boston, collapse = "|")))
       {
-        data$bucket_vicinity[i] = 'Greater Boston' 
+      #Update the ith row's Bucket_vicinity value to 'Greater Boston'
+        data$Bucket_vicinity[i] = 'Greater Boston' 
       } else {
+     #checks if the ith row's vicinity has any of the values in the 'MA_other' array (capitalization and white space must also match) 
         if(str_detect(data$vicinity[i], paste(MA_other, collapse = "|")))
         {
-          data$bucket_vicinity[i] = 'Greater MA' 
+        #Update the ith row's Bucket_vicinity value to 'Greater MA'
+          data$Bucket_vicinity[i] = 'Greater MA' 
         } else {
-          data$bucket_vicinity[i] = 'Outside MA' 
+        #if none of the previous statements are true (and the value of bucket_vicinity is 'Place Holder' then reassigns Bucket_vicinity         #to 'Outside MA' 
+          data$Bucket_vicinity[i] = 'Outside MA' 
         }
         
       }
     }
     
   }
+  #increase the counter by one
   i=i+1
 }
 ```
 
+Code for social gathering places, see READ_ME document section 2.2.2
 ```{r, include=FALSE}
-data$str_merged_tags <- paste(data$Tag_1, data$Tag_2, data$Tag_3, data$Tag_4, data$Tag_5, data$Tag_6, data$Tag_7, data$Tag_8, data$Tag_9, data$Tag_10, sep=" ")
+#Creates a new column in the data frame data called 'Str_merged_tags' that concatenates all values from the Tag columns on a row with #white space as the separator
+data$Str_merged_tags <- paste(data$Tag_1, data$Tag_2, data$Tag_3, data$Tag_4, data$Tag_5, data$Tag_6, data$Tag_7, data$Tag_8, data$Tag_9, data$Tag_10, sep=" ")
+
+#Creates an array of strings called religious 
 religious <- c('hindu_temple', 'church', 'mosque', 'synagouge')
-religous_by_tract <- aggregate(str_detect(str_merged_tags, paste(religious, collapse = "|"))~Tract_Group, data=data, FUN=sum)
+
+#Creates a new data frame, Religious_by_tract, which is aggregated by the tract group from the data data frame and is a sum of the #places in each census tract that have one of the strings from the religious array in the Str_merged_tags column
+Religous_by_tract <- aggregate(str_detect(Str_merged_tags, paste(religious, collapse = "|"))~Tract_Group, data=data, FUN=sum)
+
+#Creates an array of strings called entertainment 
 entertainment <- c('stadium', 'movie_theater', 'aquarium', 'entertainment', 'bowling_alley', 'shopping_mall')
-entertainment_by_tract <- aggregate(str_detect(str_merged_tags, paste(entertainment, collapse = "|"))~Tract_Group, data=data, FUN=sum)
+
+#Creates a new data frame, Entertianment_by_tract, which is aggregated by the tract group from the data data frame and is a sum of the #places in each census tract that have one of the strings from the entertainment array in the Str_merged_tags column
+Entertainment_by_tract <- aggregate(str_detect(Str_merged_tags, paste(entertainment, collapse = "|"))~Tract_Group, data=data, FUN=sum)
+
+#Creates an array of strings called age_restricted 
 age_restricted <- c('bar', 'nightclub')
-age_restr_by_tract <- aggregate(str_detect(str_merged_tags, paste(age_restricted, collapse = "|"))~Tract_Group, data=data, FUN=sum)
+
+#Creates a new data frame, Age_restr_by_tract, which is aggregated by the tract group from the data data frame and is a sum of the #places in each census tract that have one of the strings from the age_restricted array in the Str_merged_tags column
+Age_restr_by_tract <- aggregate(str_detect(Str_merged_tags, paste(age_restricted, collapse = "|"))~Tract_Group, data=data, FUN=sum)
+
+#Creates an array of strings called outdoor 
 outdoor <- c('campground', 'park')
-outdoor_by_tract <- aggregate(str_detect(str_merged_tags, paste(outdoor, collapse = "|"))~Tract_Group, data=data, FUN=sum)
+
+#Creates a new data frame, Outdoor_by_tract, which is aggregated by the tract group from the data data frame and is a sum of the #places in each census tract that have one of the strings from the outdoor array in the Str_merged_tags column
+Outdoor_by_tract <- aggregate(str_detect(Str_merged_tags, paste(outdoor, collapse = "|"))~Tract_Group, data=data, FUN=sum)
+
+#Creates an array of strings called educational
 educational <- c('museum', 'library', 'art_gallery')
-educational_by_tract <- aggregate(str_detect(str_merged_tags, paste(educational, collapse = "|"))~Tract_Group, data=data, FUN=sum)
+
+#Creates a new data frame, Educational_by_tract, which is aggregated by the tract group from the data data frame and is a sum of the #places in each census tract that have one of the strings from the educational array in the Str_merged_tags column
+Educational_by_tract <- aggregate(str_detect(Str_merged_tags, paste(educational, collapse = "|"))~Tract_Group, data=data, FUN=sum)
+
+#Creates an array of strings called dining
 dining <- c('restaurant', 'cafe')
-dining_by_tract <- aggregate(str_detect(str_merged_tags, paste(dining, collapse = "|"))~Tract_Group, data=data, FUN=sum)
 
-on_alc<-aggregate(str_detect(data$str_merged_tags,paste(c('bar','night_club'),collapse='|'))~data$Tract_Group,data=data,sum)
-names(on_alc)[1] <- 'Tract_Group'
-names(on_alc)[2]<-'count'
-off_alc<-aggregate(str_detect(data$str_merged_tags,'liquor_store')~data$Tract_Group,data=data,sum)
-names(off_alc)[1] <- 'Tract_Group'
-names(off_alc)[2]<-'count'
+#Creates a new data frame, Dining_by_tract, which is aggregated by the tract group from the data data frame and is a sum of the #places in each census tract that have one of the strings from the dining array in the Str_merged_tags column
+Dining_by_tract <- aggregate(str_detect(Str_merged_tags, paste(dining, collapse = "|"))~Tract_Group, data=data, FUN=sum)
 
+```
+
+Code for onsite and offsite alcohol, see READ_ME document section 2.2.1
+```{r, include=FALSE}
+#Creates a new data frame, On_alc, which is aggregated by the tract group from the data data frame and is a sum of the places in each #census tract that contain 'bar' or 'night_club' in the Str_merged_tags column
+On_alc<-aggregate(str_detect(data$Str_merged_tags,paste(c('bar','night_club'),collapse='|'))~data$Tract_Group,data=data,sum)
+
+#Reassigns the variable name in the first column of On_alc data frame to 'Tract_Group'
+names(On_alc)[1] <- 'Tract_Group'
+#Reassigns the variable name in the second column of On_alc data frame to 'count'
+names(On_alc)[2]<-'count'
+
+#Creates a new data frame, Off_alc, which is aggregated by the tract group from the data data frame and is a sum of the places in each #census tract that contain 'liquor_store' in the Str_merged_tags column
+Off_alc<-aggregate(str_detect(data$Str_merged_tags,'liquor_store')~data$Tract_Group,data=data,sum)
+
+#Reassigns the variable name in the first column of Off_alc data frame to 'Tract_Group'
+names(Off_alc)[1] <- 'Tract_Group'
+#Reassigns the variable name in the second column of Off_alc data frame to 'count'
+names(Off_alc)[2]<-'count'
+
+```
+Code for the livability of neighborhoods, see READ_ME document section 2.2.3
+```{r, include=FALSE}
+#Creates a new column in the data data frame labelled 'Livability_Variable' that assigns a string value of 'Accessibility', 'Amenities', #'Services' or 'no_tag' based on the Tag_1 value
+data['Livability_Variable']<-ifelse(c(data$Tag_1=='transit_station'|data$Tag_1=='bus_station'|data$Tag_1=='subway_station'|data$Tag_1=='light_rail'|data$Tag_1=='train_station'|data$Tag_1=='light_rail_station'|data$Tag_1=='airport'|data$Tag_1=='subway_station'),'Accessibility',
+                           ifelse(c(data$Tag_1=='atm'|data$Tag_1=='food'|data$Tag_1=='bakery'|data$Tag_1=='grocery_or_supermarket'|data$Tag_1=='bar'|data$Tag_1=='gym'|data$Tag_1=='cafe'|data$Tag_1=='laundry'|data$Tag_1=='convenience_store'|data$Tag_1=='spa'|data$Tag_1=='beauty_salon'|data$Tag_1=='bicycle_store'|data$Tag_1=='book_store'|data$Tag_1=='bowling_alley'|data$Tag_1=='car_dealer'|data$Tag_1=='car_rental'|data$Tag_1=='car_repair'|data$Tag_1=='car_wash'|data$Tag_1=='casino'|data$Tag_1=='hair_care'|data$Tag_1=='parking'|data$Tag_1=='liquor_store'|data$Tag_1=='meal_takeaway'|data$Tag_1=='meal_delivery'|data$Tag_1=='florist'|data$Tag_1=='shopping_mall'|data$Tag_1=='spa'|data$Tag_1=='stadium'|data$Tag_1=='amusement_park'|data$Tag_1=='aquarium'|data$Tag_1=='art_gallery'|data$Tag_1=='campground'|data$Tag_1=='clothing_store'|data$Tag_1=='department_store'|data$Tag_1=='electronics_store'|data$Tag_1=='furniture_store'|data$Tag_1=='hardware_store'|data$Tag_1=='home_goods_store'|data$Tag_1=='jewelry_store'|data$Tag_1=='lodging'|data$Tag_1=='movie_rental'|data$Tag_1=='movie_theater'|data$Tag_1=='moving_company'|data$Tag_1=='museum'|data$Tag_1=='night_club'|data$Tag_1=='pet_store'|data$Tag_1=='premise'|data$Tag_1=='rv_park'|data$Tag_1=='storage'|data$Tag_1=='shoe_store'|data$Tag_1=='store'|data$Tag_1=='zoo'|data$Tag_1=='pharmacy'|data$Tag_1=='gas_station'|data$Tag_1=='bank'|data$Tag_1=='taxi_stand'|data$Tag_1=='park'|data$Tag_1=='restaurant'),'Amenities',
+                                  ifelse(c(data$Tag_1=='hospital'|data$Tag_1=='embassy'|data$Tag_1=='mosque'|data$Tag_1=='synagogue'|data$Tag_1=='place_of_worship'|data$Tag_1=='hindu_temple'|data$Tag_1=='cemetery'|data$Tag_1=='funeral_home'|data$Tag_1=='church'|data$Tag_1=='real_estate_agency'|data$Tag_1=='fire_station'|data$Tag_1=='library'|data$Tag_1=='city_hall'|data$Tag_1=='travel_agency'|data$Tag_1=='courthouse'|data$Tag_1=='insurance_agency'|data$Tag_1=='locksmith'|data$Tag_1=='painter'|data$Tag_1=='local_government_office'|data$Tag_1=='finance'|data$Tag_1=='accounting'|data$Tag_1=='university'|data$Tag_1=='school'|data$Tag_1=='dentist'|data$Tag_1=='doctor'|data$Tag_1=='electrician'|data$Tag_1=='general_contractor'|data$Tag_1=='health'|data$Tag_1=='physiotherapist'|data$Tag_1=='plumber'|data$Tag_1=='post_office'|data$Tag_1=='roofing_contractor'|data$Tag_1=='veterinary_care'|data$Tag_1=='lawyer'|data$Tag_1=='police'),'Services','no_tag')))
+
+#Creates a new column in the data data frame labelled 'Livability_Score' that assigns a string value of '5', '3', '1' or '0' based on #the Tag_1 value's priority of existence within a residential neighborhood
+data['Livability_Score']<-ifelse(c(data$Tag_1=='airport'|data$Tag_1=='bus_station'|data$Tag_1=='cafe'|data$Tag_1=='convenience_store'|data$Tag_1=='airport'|data$Tag_1=='food'|data$Tag_1=='grocery_or_supermarket'|data$Tag_1=='gym'|data$Tag_1=='laundry'|data$Tag_1=='light_rail_station'|data$Tag_1=='parking'|data$Tag_1=='pharmacy'|data$Tag_1=='real_estate_agency'|data$Tag_1=='restaurant'|data$Tag_1=='subway_station'|data$Tag_1=='train_station'|data$Tag_1=='transit_station'),'5',
+                           ifelse(c(data$Tag_1=='accounting'|data$Tag_1=='atm'|data$Tag_1=='bakery'|data$Tag_1=='bank'|data$Tag_1=='bar'|data$Tag_1=='beauty_salon'|data$Tag_1=='bicycle_store'|data$Tag_1=='book_store'|data$Tag_1=='bowling_alley'|data$Tag_1=='bicycle_store'|data$Tag_1=='car_dealer'|data$Tag_1=='car_rental'|data$Tag_1=='car_repair'|data$Tag_1=='car_wash'|data$Tag_1=='casino'|data$Tag_1=='dentist'|data$Tag_1=='finance'|data$Tag_1=='doctor'|data$Tag_1=='electrician'|data$Tag_1=='florist'|data$Tag_1=='general_contractor'|data$Tag_1=='insurance_agency'|data$Tag_1=='hair_care'|data$Tag_1=='health'|data$Tag_1=='hospital'|data$Tag_1=='lawyer'|data$Tag_1=='library'|data$Tag_1=='liquor_store'|data$Tag_1=='locksmith'|data$Tag_1=='meal_takeaway'|data$Tag_1=='meal_delivery'|data$Tag_1=='painter'|data$Tag_1=='park'|data$Tag_1=='physiotherapist'|data$Tag_1=='plumber'|data$Tag_1=='post_office'|data$Tag_1=='roofing_contractor'|data$Tag_1=='school'|data$Tag_1=='shopping_mall'|data$Tag_1=='spa'|data$Tag_1=='stadium'|data$Tag_1=='taxi_stand'|data$Tag_1=='university'|data$Tag_1=='veterinary_care'),'3',
+                                  ifelse(c(data$Tag_1=='amusement_park'|data$Tag_1=='aquarium'|data$Tag_1=='art_gallery'|data$Tag_1=='campground'|data$Tag_1=='cemetery'|data$Tag_1=='church'|data$Tag_1=='city_hall'|data$Tag_1=='clothing_store'|data$Tag_1=='courthouse'|data$Tag_1=='department_store'|data$Tag_1=='electronics_store'|data$Tag_1=='embassy'|data$Tag_1=='fire_station'|data$Tag_1=='funeral_home'|data$Tag_1=='furniture_store'|data$Tag_1=='gas_station'|data$Tag_1=='hardware_store'|data$Tag_1=='hindu_temple'|data$Tag_1=='home_goods_store'|data$Tag_1=='jewelry_store'|data$Tag_1=='local_government_office'|data$Tag_1=='lodging'|data$Tag_1=='movie_rental'|data$Tag_1=='movie_theater'|data$Tag_1=='moving_company'|data$Tag_1=='museum'|data$Tag_1=='night_club'|data$Tag_1=='pet_store'|data$Tag_1=='place_of_worship'|data$Tag_1=='police'|data$Tag_1=='premise'|data$Tag_1=='rv_park'|data$Tag_1=='storage'|data$Tag_1=='shoe_store'|data$Tag_1=='store'|data$Tag_1=='synagogue'|data$Tag_1=='mosque'|data$Tag_1=='travel_agency'|data$Tag_1=='zoo'),'1','0')))
+
+```
+
+Code for the City Hangout Index, see READ_ME document section 2.2.5
+```{r, include=FALSE}
+#Creates a new data frame, Hangout_food, which is aggregated by the tract group from the data data frame and is a sum of the places in #each census tract that contain 'restuarant', 'cafe', 'bar', or 'bakery' in the Str_merged_tags column
+Hangout_food<-aggregate(str_detect(data$Str_merged_tags,paste(c('restaurant','cafe','bar','bakery'),collapse='|'))~data$Tract_Group,data=data,sum)
+
+#Reassigns the variable name in the first column of Hangout_food data frame to 'Tract_Group'
+names(Hangout_food)[1] <- 'Tract_Group'
+#Reassigns the variable name in the second column of Hangout_food data frame to 'count'
+names(Hangout_food)[2]<-'count'
+
+#Creates a new data frame, Hangout_shopping, which is aggregated by the tract group from the data data frame and is a sum of the places #in each census tract that contain 'shopping_mall', 'convenience_store' or 'clothing_store' in the Str_merged_tags column
+Hangout_shopping<-aggregate(str_detect(data$Str_merged_tags,paste(c('shopping_mall','convenience_store','clothing_store'),collapse='|'))~data$Tract_Group,data=data,sum)
+
+#Reassigns the variable name in the first column of Hangout_shopping data frame to 'Tract_Group'
+names(Hangout_shopping)[1] <- 'Tract_Group'
+#Reassigns the variable name in the second column of Hangout_shopping data frame to 'count'
+names(Hangout_shopping)[2]<-'count'
+
+#Creates a new data frame, Hangout_environment, which is aggregated by the tract group from the data data frame and is a sum of the #places in each census tract that contain 'museum','art_gallery','park','church','mosque' or 'synagogue' in the Str_merged_tags column
+Hangout_environment<-aggregate(str_detect(data$Str_merged_tags,paste(c('museum','art_gallery','park','church','mosque','synagogue'),collapse='|'))~data$Tract_Group,data=data,sum)
+
+#Reassigns the variable name in the first column of Hangout_environment data frame to 'Tract_Group'
+names(Hangout_environment)[1] <- 'Tract_Group'
+#Reassigns the variable name in the second column of Hangout_environment data frame to 'count'
+names(Hangout_environment)[2]<-'count'
 ```
 
 
